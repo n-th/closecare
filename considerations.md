@@ -22,3 +22,26 @@ Isolation
 Neighborhood noise
 Monitoring
 Cache
+
+
+# JWT Authentication
+
+
+
+# Multi hierarchy
+
+
+
+# Architectural Characteristics
+- Extensibility
+- Consistency
+- Availability
+- Usability
+- Observability
+- Deployability
+- Configurability
+- Maintainability
+- Resiliency
+- Durability
+- Security
+- Scalability

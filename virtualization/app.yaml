@@ -21,6 +21,12 @@ spec:
           imagePullPolicy: Never
           ports:
             - containerPort: 5000
+          resources:
+            limits:
+              cpu: 500m
+              memory: 100Mi
+            requests:
+              cpu: 200m
           env:
           - name: FLASK_ENV
             value: "development"
