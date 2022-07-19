@@ -8,7 +8,7 @@
 CREATE TABLE employee(id serial PRIMARY KEY, name text, manager_id int, company_id int);
 ```
 
-smallserial range 1 to 32,767
+smallserial range 1 to 3j2,767
 serial range 1 to 2,147,483,647
 bigserial range 1 to 9,223,372,036,854,775,807
 
@@ -93,15 +93,55 @@ postgres=# SELECT count(id) FROM employee WHERE manager_id=51;
  10091
 (1 row)
 
+
+https://www.postgresql.org/docs/current/static/ltreehtml
+```
 CREATE TABLE position(
     id serial primary key,
     employee_id int,
     hierarchy ltree
 );
-CREATE INDEX employee__hierarchy_idx ON employee USING gist (hierarchy);
-CREATE INDEX employee__employee_id_idx ON employee(employee_id);
-
+CREATE INDEX employee__hierarchy_idx ON position USING gist (hierarchy);
+CREATE INDEX employee__employee_id_idx ON position(employee_id);
+```
 Generalized Search Index (GiST)
+
+```
+INSERT INTO position(employee_id, hierarchy) VALUES ( 1, '1');
+INSERT INTO position(employee_id, hierarchy) VALUES ( 2, '1.2');
+INSERT INTO position(employee_id, hierarchy) VALUES ( 3, '1.3');
+INSERT INTO position(employee_id, hierarchy) VALUES ( 4, '1.4');
+INSERT INTO position(employee_id, hierarchy) VALUES ( 5, '5.1');
+INSERT INTO position(employee_id, hierarchy) VALUES ( 6, '1.2.6');
+INSERT INTO position(employee_id, hierarchy) VALUES ( 7, '1.2.7');
+INSERT INTO position(employee_id, hierarchy) VALUES ( 8, '1.2.7.8');
+````
+
+postgres=# EXPLAIN ANALYZE SELECT employee_id FROM position WHERE hierarchy ~ '*.2.*';
+                                                           QUERY PLAN
+---------------------------------------------------------------------------------------------------------------------------------
+ Bitmap Heap Scan on "position"  (cost=4.24..14.92 rows=12 width=4) (actual time=0.060..0.065 rows=4 loops=1)
+   Recheck Cond: (hierarchy ~ '*.2.*'::lquery)
+   Heap Blocks: exact=1
+   ->  Bitmap Index Scan on employee__hierarchy_idx  (cost=0.00..4.23 rows=12 width=0) (actual time=0.038..0.038 rows=4 loops=1)
+         Index Cond: (hierarchy ~ '*.2.*'::lquery)
+ Planning Time: 2.594 ms
+ Execution Time: 0.181 ms
+(7 rows)
+
+```
+UPDATE position
+SET hierarchy = text2ltree('9.1')::lpath || subpath(hierarchy,2))
+WHERE hierarchy <@ '1';
+````
+
+```
+DELETE position
+SET hierarchy = text2ltree('9.1')::lpath || subpath(hierarchy,2))
+WHERE hierarchy <@ '1';
+````
+
+
 
 # Consideration
 
@@ -119,7 +159,6 @@ CREATE SCHEMA company_id (id serial PRIMARY KEY, name text);
 Cons
 - DB management
 
-TODO: LTREE 
 
 # 3. Separate database per tenant (used in virtualization sample)
 
