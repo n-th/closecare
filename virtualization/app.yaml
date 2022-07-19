@@ -18,9 +18,6 @@ spec:
       containers:
         - name: flaskapi
           image: flask-api
-          imagePullPolicy: Never
-          ports:
-            - containerPort: 5000
           resources:
             limits:
               cpu: 500m
@@ -31,11 +28,12 @@ spec:
             httpGet:
               path: /healthz
               port: 8080
-              httpHeaders:
-              - name: Custom-Header
-                value: Awesome
             initialDelaySeconds: 3
             periodSeconds: 3
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 3000
+            fsGroup: 2000
           env:
           - name: FLASK_ENV
             value: "development"
@@ -56,7 +54,6 @@ spec:
               configMapKeyRef:
                 name: tenant
                 key: organization
-        #Restric capabilities and set user !=root
 ---
 apiVersion: v1
 kind: Service
@@ -64,9 +61,11 @@ metadata:
   name: flask-service
 spec:
   ports:
-  - port: 5000
-    protocol: TCP
-    targetPort: 5000
+    - name: https
+      protocol: TCP
+      port: 443
+      targetPort: 5000
   selector:
     app: flaskapi
-  type: LoadBalancer
+  type: ExternalName
+  externalName: flask-service.org_1.svc.cluster.local

@@ -24,6 +24,10 @@ spec:
             memory: 100Mi
           requests:
             cpu: 200m
+        securityContext:
+          runAsUser: 1000
+          runAsGroup: 3000
+          fsGroup: 2000
         env:
           - name: POSTGRES_USER
             valueFrom:

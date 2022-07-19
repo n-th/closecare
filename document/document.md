@@ -8,6 +8,7 @@ Map between documents and a storage platform
 
 import boto
 import boto.s3.connection
+
 access_key = 'put your access key here!'
 secret_key = 'put your secret key here!'
 

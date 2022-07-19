@@ -18,7 +18,7 @@ Pros
 Cons
 
 - Admin dependent for onboarding and management
-
+- Hard to manage SSL
 
 # Scaling through metrics
 
@@ -60,3 +60,33 @@ Profile	Descriptions:
 Privileged:	Unrestricted policy, providing the widest possible level of permissions. This policy allows for known privilege escalations.
 Baseline:	Minimally restrictive policy which prevents known privilege escalations. Allows the default (minimally specified) Pod configuration.
 Restricted:	Heavily restricted policy, following current Pod hardening best practices.
+
+
+
+## Ingress
+
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-wildcard-host
+  namespace: ingress  # needs a way to get services from multiple namespaces
+spec:
+  rules:
+  - host: n-th.me
+    https:
+      paths:
+      - path: /org_1
+        pathType: Prefix
+        backend:
+          service:
+            name: flask-service
+            port:
+              number: 5000
+      - path: /org_2
+        pathType: Prefix
+        backend:
+          service:
+            name: flask-service
+            port:
+              number: 5001
