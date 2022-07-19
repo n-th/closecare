@@ -69,7 +69,7 @@ Restricted:	Heavily restricted policy, following current Pod hardening best prac
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: ingress-wildcard-host
+  name: ingress
   namespace: ingress  # needs a way to get services from multiple namespaces
 spec:
   rules:

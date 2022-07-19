@@ -1,6 +1,6 @@
-tabela com coluna de organizacoes
+# 1. Shared table for tenants
 
-# Performance
+## Performance
 
 ``` docker run -e POSTGRES_PASSWORD=postgres --name psql postgres ```
 
@@ -27,8 +27,6 @@ FROM generate_series(1, 10000000) s(i);
 ```
 SELECT * FROM employee LIMIT 50;
 ```
-
-## Analysis
 
 BUSCA EM ID
 
@@ -98,16 +96,16 @@ postgres=# select count(id) from employee where manager_id=51;
 
 https://www.enterprisedb.com/postgres-tutorials/introduction-postgresql-performance-tuning-and-optimization
 
-## Postgresql configuration
+### Postgresql configuration for high performance
 
-# postgresql.conf
+````
+postgresql.conf
 
 data_directory = '/var/lib/pgsql/data'
 hba_file = '/var/lib/pgsql/data/pg_hba.conf'
 ident_file = '/var/lib/pgsql/data/pg_ident.conf'
 
 port = 5432
-ssl_only = true
 
 max_connections = = GREATEST(4 x CPU cores, 100)
 shared_buffers =  LEAST(RAM/2, 10GB)
@@ -115,7 +113,7 @@ work_mem = ((Total RAM - shared_buffers)/(16 x CPU cores))
 
 authentication_timeout = 60
 password_encryption = true
-
+````
 
 
 ## Security
@@ -123,13 +121,27 @@ password_encryption = true
 https://www.cybertec-postgresql.com/en/setting-up-ssl-authentication-for-postgresql/
 
 
-File|	Contents|	Effect
-$PGDATA/server.crt|	server certificate | sent to client to indicate server's identity
-$PGDATA/server.key|	server private key | proves server certificate was sent by the owner; does not indicate certificate owner is trustworthy
-$PGDATA/root.crt|	trusted certificate | authorities	checks that client certificate is signed by a trusted certificate authority
+| File   |      Contents      |  CoEffectol |
+|----------|:-------------:|------:|
+| '$PGDATA/server.crt' |  server certificate | sent to client to indicate server's identity |
+| '$PGDATA/server.key' |    server private key   |   proves server certificate was sent by the owner; does not indicate certificate owner is trustworthy |
+| '$PGDATA/root.crt' | trusted certificate | authorities	checks that client certificate is signed by a trusted certificate authority |
 
+```
+# postgresql.conf
+ssl_only = true
+```
 
 # Consideration
 
 Usar distribuição mais próxima da realidade para análise de performance
 RH companies need to keep documents for a long timebox, maybe a soft delete for users and documents?
+
+# 2.  Schema-based
+
+##
+
+# 3. Row Level Security
+
+# 4. Separate database per tenant (used in virtualization sample)
+
