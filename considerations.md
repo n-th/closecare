@@ -21,7 +21,7 @@ Will we need to implement privacy operations (GRPD)?
 
 
 # Multi hierarchy
-
+LTree
 
 
 # Architectural Characteristics

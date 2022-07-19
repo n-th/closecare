@@ -30,7 +30,7 @@ SELECT * FROM employee LIMIT 50;
 
 BUSCA EM ID
 
-postgres=# explain analyze select name from employee where id=5000;
+postgres=# EXPLAIN ANALYZE SELECT name FROM employee WHERE id=5000;
 
                                                        QUERY PLAN
 -------------------------------------------------------------------------------------------------------------------------
@@ -40,7 +40,7 @@ postgres=# explain analyze select name from employee where id=5000;
  Execution Time: 0.092 ms
 (4 rows)
 
-postgres=# explain analyze select * from employee where id=5001;
+postgres=# EXPLAIN ANALYZE SELECT * FROM employee WHERE id=5001;
 
                                                        QUERY PLAN
 -------------------------------------------------------------------------------------------------------------------------
@@ -52,7 +52,7 @@ postgres=# explain analyze select * from employee where id=5001;
 
 BUSCA EM MANAGER_ID PARA TODOS OS CAMPOS => SEQUENTIAL SCAN (PARALEL IN THIS CASE)
 
-postgres=# explain analyze select * from employee where manager_id=50;
+postgres=# EXPLAIN ANALYZE SELECT * FROM employee WHERE manager_id=50;
 
                                                        QUERY PLAN
 ------------------------------------------------------------------------------------------------------------------------
@@ -68,13 +68,13 @@ postgres=# explain analyze select * from employee where manager_id=50;
 
 
 ```
-CREATE INDEX employee__manager_id_idx on employee(manager_id);
+CREATE INDEX employee__manager_id_idx ON employee(manager_id);
 ```
 PostgreSQL uses btree by default
 
 HEAP SCAN
 
-postgres=# explain analyze select * from employee where manager_id=51;
+postgres=# EXPLAIN ANALYZE SELECT * FROM employee WHERE manager_id=51;
 
                                                              QUERY PLAN
 -------------------------------------------------------------------------------------------------------------------------------------
@@ -87,14 +87,21 @@ postgres=# explain analyze select * from employee where manager_id=51;
  Execution Time: 27.206 ms
 (7 rows)
 
-postgres=# select count(id) from employee where manager_id=51;
+postgres=# SELECT count(id) FROM employee WHERE manager_id=51;
  count
 -------
  10091
 (1 row)
 
+CREATE TABLE position(
+    id serial primary key,
+    employee_id int,
+    hierarchy ltree
+);
+CREATE INDEX employee__hierarchy_idx ON employee USING gist (hierarchy);
+CREATE INDEX employee__employee_id_idx ON employee(employee_id);
 
-TODO: LTREE 
+Generalized Search Index (GiST)
 
 # Consideration
 
@@ -145,7 +152,7 @@ password_encryption = true
 
 https://www.cybertec-postgresql.com/en/setting-up-ssl-authentication-for-postgresql/
 
-
+### SSL
 | File   |      Contents      |  CoEffectol |
 |----------|:-------------:|------:|
 | '$PGDATA/server.crt' |  server certificate | sent to client to indicate server's identity |
@@ -157,8 +164,12 @@ https://www.cybertec-postgresql.com/en/setting-up-ssl-authentication-for-postgre
 ssl_only = true
 ```
 
-Row Level Security
+### Row Level Security
 
 https://satoricyber.com/sql-server-security/sql-server-row-level-security/#:~:text=Row%2Dlevel%20security%20(RLS),number%20of%20exposed%20data%20rows
 
+PostgreSQL 9.5 and newer includes a feature called Row Level Security (RLS). When you define security policies on a table, these policies restrict which rows in that table are returned by SELECT queries or which rows are affected by INSERT, UPDATE, and DELETE commands.
 
+pgadmin
+
+https://towardsdatascience.com/how-to-run-postgresql-and-pgadmin-using-docker-3a6a8ae918b5
