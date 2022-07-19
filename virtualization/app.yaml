@@ -27,6 +27,15 @@ spec:
               memory: 100Mi
             requests:
               cpu: 200m
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+              httpHeaders:
+              - name: Custom-Header
+                value: Awesome
+            initialDelaySeconds: 3
+            periodSeconds: 3
           env:
           - name: FLASK_ENV
             value: "development"

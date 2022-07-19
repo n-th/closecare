@@ -15,7 +15,7 @@ O sistema X é um software para RH de grandes empresas com as seguintes caracter
     - employee(id, name, manager_id, company_id)
       - manager_id -> employee.id
     - documents(id, type, file, employee_id, company_id)
-    - hierarchy(id, manager_id, employee_id)
+///    - hierarchy(id, manager_id, employee_id)
 
 - APIs REST em Flask/Python
 
