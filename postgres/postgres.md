@@ -94,9 +94,35 @@ postgres=# select count(id) from employee where manager_id=51;
 (1 row)
 
 
-https://www.enterprisedb.com/postgres-tutorials/introduction-postgresql-performance-tuning-and-optimization
+TODO: LTREE 
 
-### Postgresql configuration for high performance
+# Consideration
+
+Usar distribuição mais próxima da realidade para análise de performance
+RH companies need to keep documents for a long timebox, maybe a soft delete for users and documents?
+
+# 2.  Schema-based
+
+https://hackernoon.com/your-guide-to-schema-based-multi-tenant-systems-and-postgresql-implementation-gm433589
+
+```
+CREATE SCHEMA company_id (id serial PRIMARY KEY, name text);
+```
+
+Cons
+- DB management
+
+TODO: LTREE 
+
+# 3. Separate database per tenant (used in virtualization sample)
+
+CREATE TABLE employee(id serial PRIMARY KEY, name text, manager_id int);
+
+Cons
+- DB management
+
+# Postgresql configuration for high performance
+https://www.enterprisedb.com/postgres-tutorials/introduction-postgresql-performance-tuning-and-optimization
 
 ````
 postgresql.conf
@@ -115,7 +141,6 @@ authentication_timeout = 60
 password_encryption = true
 ````
 
-
 ## Security
 
 https://www.cybertec-postgresql.com/en/setting-up-ssl-authentication-for-postgresql/
@@ -132,16 +157,8 @@ https://www.cybertec-postgresql.com/en/setting-up-ssl-authentication-for-postgre
 ssl_only = true
 ```
 
-# Consideration
+Row Level Security
 
-Usar distribuição mais próxima da realidade para análise de performance
-RH companies need to keep documents for a long timebox, maybe a soft delete for users and documents?
+https://satoricyber.com/sql-server-security/sql-server-row-level-security/#:~:text=Row%2Dlevel%20security%20(RLS),number%20of%20exposed%20data%20rows
 
-# 2.  Schema-based
-
-##
-
-# 3. Row Level Security
-
-# 4. Separate database per tenant (used in virtualization sample)
 

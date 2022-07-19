@@ -1,5 +1,6 @@
 Privacy for documents visualization
 
+New table suggestion:
 account(id, employee_id, account_id, storage_platform)
 
 Map between documents and a storage platform
@@ -21,7 +22,7 @@ conn = boto.connect_s3(
 
 def set_acl(account_id, document_id, permission):
     plans_key = bucket.get_key('secret_plans.txt')
-    plans_key.set_canned_acl('private')
+    plans_key.set_canned_acl(permission, account_id)
 
 def get_url(document_id):
     url = key.generate_url(0, query_auth=False, force_http=True)
@@ -34,7 +35,7 @@ RH companies need to keep documents for a long timebox.
 
 Storage plataforms usually provide different costs for different rates document retrievals.
 
-"Storage class for automatically optimizing data with changing or unknown access patterns. S3 Intelligent-Tiering is an Amazon S3 storage class designed to optimize storage costs by automatically moving data to the most cost-effective access tier, without performance impact or operational overhead.Storage class for automatically optimizing data with changing or unknown access patterns. S3 Intelligent-Tiering is an Amazon S3 storage class designed to optimize storage costs by automatically moving data to the most cost-effective access tier, without performance impact or operational overhead.
+"Storage class for automatically optimizing data with changing or unknown access patterns. S3 Intelligent-Tiering is an Amazon S3 storage class designed to optimize storage costs by automatically moving data to the most cost-effective access tier, without performance impact or operational overhead.Storage class for automatically optimizing data with changing or unknown access patterns. S3 Intelligent-Tiering is an Amazon S3 storage class designed to optimize storage costs by automatically moving data to the most cost-effective access tier, without performance impact or operational overhead."
 
 
 ## Considerations

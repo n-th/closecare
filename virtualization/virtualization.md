@@ -62,15 +62,14 @@ Baseline:	Minimally restrictive policy which prevents known privilege escalation
 Restricted:	Heavily restricted policy, following current Pod hardening best practices.
 
 
-
 ## Ingress
 
-
+```
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: ingress
-  namespace: ingress  # needs a way to get services from multiple namespaces
+  namespace: ingress # needs a way to get services from multiple namespaces
 spec:
   rules:
   - host: n-th.me
@@ -90,3 +89,4 @@ spec:
             name: flask-service
             port:
               number: 5001
+```

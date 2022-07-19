@@ -3,7 +3,7 @@ from models import db
 from caching import simple_cache
 from flask import current_app
 
-MYSQL_URI = "mysql+pymysql://user:pwd@localhost/{}?charset=utf8"
+PSQL_URI = "mysql+pymysql://user:pwd@localhost/{}?charset=utf8"
 
 
 @simple_cache
@@ -14,7 +14,7 @@ def get_known_tenants():
 
 def prepare_bind(tenant_name):
     if tenant_name not in current_app.config["SQLALCHEMY_BINDS"]:
-        current_app.config["SQLALCHEMY_BINDS"][tenant_name] = MYSQL_URI.format(tenant_name)
+        current_app.config["SQLALCHEMY_BINDS"][tenant_name] = PSQL_URI.format(tenant_name)
     return current_app.config["SQLALCHEMY_BINDS"][tenant_name]
 
 
