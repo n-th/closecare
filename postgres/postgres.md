@@ -12,7 +12,7 @@ CREATE TABLE employee(id serial PRIMARY KEY, full_name text, manager_id int, com
 
 | type | range |
 | -- | -- |
-| smallserial | 1 to 3j2,767 | 
+| smallserial | 1 to 32,767 | 
 | serial | 1 to 2,147,483,647 |
 | bigserial | 1 to 9,223,372,036,854,775,807 |
 
@@ -106,9 +106,8 @@ WITH RECURSIVE subordinate AS (
 		SELECT e.id, e.manager_id, e.full_name
 		FROM employee e
 		INNER JOIN subordinate s ON s.id = e.manager_id
-) SELECT * FROM subordinate;
+) SELECT id FROM subordinate;
 ```
-
 
 postgres=# EXPLAIN ANALYZE WITH RECURSIVE subordinate AS (
 	SELECT id, manager_id, full_name
@@ -157,20 +156,28 @@ INSERT INTO position(employee_id, hierarchy_path) VALUES ( 1, '1');
 INSERT INTO position(employee_id, hierarchy_path) VALUES ( 2, '1.2');
 INSERT INTO position(employee_id, hierarchy_path) VALUES ( 3, '1.3');
 INSERT INTO position(employee_id, hierarchy_path) VALUES ( 4, '1.4');
-INSERT INTO position(employee_id, hierarchy_path) VALUES ( 5, '5.1');
+INSERT INTO position(employee_id, hierarchy_path) VALUES ( 5, '1.5');
 INSERT INTO position(employee_id, hierarchy_path) VALUES ( 6, '1.2.6');
 INSERT INTO position(employee_id, hierarchy_path) VALUES ( 7, '1.2.7');
 INSERT INTO position(employee_id, hierarchy_path) VALUES ( 8, '1.2.7.8');
+INSERT INTO position(employee_id, hierarchy_path) VALUES ( 9, '1.9');
+INSERT INTO position(employee_id, hierarchy_path) VALUES ( 10, '1.2.7.8');
+INSERT INTO position(employee_id, hierarchy_path) VALUES ( 11, '1.2.11');
+INSERT INTO position(employee_id, hierarchy_path) VALUES ( 12, '1.2.11.12');
+INSERT INTO position(employee_id, hierarchy_path) VALUES ( 13, '1.2.11.13');
+INSERT INTO position(employee_id, hierarchy_path) VALUES ( 14, '1.2.11.14');
+INSERT INTO position(employee_id, hierarchy_path) VALUES ( 15, '1.2.7.8.15');
+INSERT INTO position(employee_id, hierarchy_path) VALUES ( 16, '1.2.7.8.16');
 ```
 
-postgres=# EXPLAIN ANALYZE SELECT employee_id FROM position WHERE hierarchy ~ '*.2.*';
+postgres=# EXPLAIN ANALYZE SELECT employee_id FROM position WHERE hierarchy ~ '2.*';
                                                            QUERY PLAN
 ---------------------------------------------------------------------------------------------------------------------------------
  Bitmap Heap Scan on "position"  (cost=4.24..14.92 rows=12 width=4) (actual time=0.060..0.065 rows=4 loops=1)
-   Recheck Cond: (hierarchy ~ '*.2.*'::lquery)
+   Recheck Cond: (hierarchy ~ '2.*'::lquery)
    Heap Blocks: exact=1
    ->  Bitmap Index Scan on employee__hierarchy_idx  (cost=0.00..4.23 rows=12 width=0) (actual time=0.038..0.038 rows=4 loops=1)
-         Index Cond: (hierarchy ~ '*.2.*'::lquery)
+         Index Cond: (hierarchy ~ '2.*'::lquery)
  Planning Time: 2.594 ms
  Execution Time: 0.181 ms
 (7 rows)
@@ -189,12 +196,17 @@ SET hierarchy = text2ltree('9')::lpath || subpath(hierarchy,nlevel('9.1'))
 WHERE hierarchy <@ '1';
 ```
 
+
+// Add company_id
+
+
+
 # 2.  Schema-based
 
 https://hackernoon.com/your-guide-to-schema-based-multi-tenant-systems-and-postgresql-implementation-gm433589
 
 ```sql
-CREATE TABLE company(id serial PRIMARY KEY, name text);
+CREATE TABLE company(id serial PRIMARY KEY, full_name text);
 ```
 
 ```sql
@@ -206,7 +218,7 @@ SET search_path TO org_1, public;
 ```
 
 ```sql
-CREATE TABLE employee(id serial PRIMARY KEY, name text, manager_id int);
+CREATE TABLE employee(id serial PRIMARY KEY, full_name text, manager_id int);
 ```
 
 Cons
@@ -216,7 +228,7 @@ Cons
 # 3. Separate database per tenant (used in virtualization sample)
 
 ```sql
-CREATE TABLE employee(id serial PRIMARY KEY, name text, manager_id int);
+CREATE TABLE employee(id serial PRIMARY KEY, full_name text, manager_id int);
 ```
 
 Cons
@@ -273,4 +285,4 @@ https://towardsdatascience.com/how-to-run-postgresql-and-pgadmin-using-docker-3a
 
 Usar distribuição mais próxima da realidade para análise de performance
 
-RH companies need to keep documents for a long timebox, maybe a soft delete for users and documents?
+HR companies need to keep documents for a long timebox, maybe a soft delete for users and documents?

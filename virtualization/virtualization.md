@@ -2,7 +2,9 @@
 eksctl create cluster --name cool-cluster --region us-east-1 --ssh-access --ssh-public-key ./ssh.pub --managed 
 ```
 
-# Namespace + ConfigMap
+# Kubernetes
+
+## Namespace + ConfigMap
 
 Pros
 
@@ -14,13 +16,14 @@ Pros
 - Secure (namespace isolation)
 - Low latency (nodes can be independently created near to the organization region)
 - Allow single db or multiple dbs usage (one in a single namespace or one in each namespace)
+- Easier to bill
 
 Cons
 
 - Admin dependent for onboarding and management
 - Hard to manage SSL
 
-# Scaling through metrics
+## Scaling through metrics
 
 https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/
 
@@ -37,7 +40,7 @@ https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/
       averageValue: 30
 ```
 
-## Security
+### Security
 
 https://kubernetes.io/docs/concepts/security/pod-security-standards
 
@@ -55,21 +58,20 @@ metadata:
     pod-security.kubernetes.io/warn-version: v1.24
 ```
 
-
 Profile	Descriptions:
 Privileged:	Unrestricted policy, providing the widest possible level of permissions. This policy allows for known privilege escalations.
 Baseline:	Minimally restrictive policy which prevents known privilege escalations. Allows the default (minimally specified) Pod configuration.
 Restricted:	Heavily restricted policy, following current Pod hardening best practices.
 
 
-## Ingress
+### Ingress
 
 ```
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: ingress
-  namespace: ingress # needs a way to get services from multiple namespaces
+  namespace: org_1
 spec:
   rules:
   - host: n-th.me
@@ -82,11 +84,23 @@ spec:
             name: flask-service
             port:
               number: 5000
+```
+
+```
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress
+  namespace: org_2
+spec:
+  rules:
+  - host: n-th.me/
+    https:
       - path: /org_2
         pathType: Prefix
         backend:
           service:
             name: flask-service
             port:
-              number: 5001
+              number: 5000
 ```
