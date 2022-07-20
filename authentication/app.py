@@ -21,6 +21,7 @@ class User(db.Model):
     name = db.Column(db.String(100))
     email = db.Column(db.String(70), unique=True)
     password = db.Column(db.String(80))
+    company_id = db.Column(db.String(80))
 
 
 def token_required(f):
@@ -29,7 +30,7 @@ def token_required(f):
         token = None
 
         if "authorization" in request.headers:
-            token = request.headers["authorization"]
+            token = request.headers["authorization"]  # authorization: Bearer token
 
         if not token:
             return jsonify(message={"message": "Token is missing"}), 401
@@ -69,7 +70,12 @@ def login():
 
     if check_password_hash(user.password, auth.get("password")):
         token = jwt.encode(
-            {"public_id": user.public_id, "exp": datetime.now(timezone.utc) + timedelta(minutes=30)}, app.config["SECRET_KEY"]
+            {
+                "public_id": user.public_id,
+                "expires_at": datetime.now(timezone.utc) + timedelta(minutes=30),
+                "issed_at": datetime.now(timezone.utc),
+            },
+            app.config["SECRET_KEY"],
         )
 
         return make_response(jsonify(message={"token": token.decode("UTF-8")}), 201)

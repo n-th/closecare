@@ -1,6 +1,6 @@
 {
-    user_id: string;  ==> employee.id
-    company_id: string; ===> employee.company_id
+    public_id: string;
+    company_id: string; 
     role: string;
     issued_at: unix;
     expires_at: unix;
