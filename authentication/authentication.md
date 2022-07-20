@@ -8,3 +8,5 @@
 
 
 https://auth0.com/
+
+https://withblue.ink/2020/04/08/stop-writing-your-own-user-authentication-code.html
