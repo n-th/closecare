@@ -3,7 +3,7 @@ from models import db
 from caching import simple_cache
 from flask import current_app
 
-PSQL_URI = "mysql+pymysql://user:pwd@localhost/{}?charset=utf8"
+PSQL_URI = "postgres://username:password@localhost:5432/dbname"
 
 
 @simple_cache

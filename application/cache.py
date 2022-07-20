@@ -1,4 +1,5 @@
 from functools import wraps
+
 from werkzeug.contrib.cache import SimpleCache
 
 cache = SimpleCache()

@@ -2,35 +2,39 @@
 
 ## Performance
 
-``` docker run -e POSTGRES_PASSWORD=postgres --name psql postgres ```
-
-```
-CREATE TABLE employee(id serial PRIMARY KEY, name text, manager_id int, company_id int);
+``` sh
+docker run -e POSTGRES_PASSWORD=postgres --name psql postgres 
 ```
 
-smallserial range 1 to 3j2,767
-serial range 1 to 2,147,483,647
-bigserial range 1 to 9,223,372,036,854,775,807
-
-
+```sql
+CREATE TABLE employee(id serial PRIMARY KEY, full_name text, manager_id int, company_id int);
 ```
+
+| type | range |
+| -- | -- |
+| smallserial | 1 to 3j2,767 | 
+| serial | 1 to 2,147,483,647 |
+| bigserial | 1 to 9,223,372,036,854,775,807 |
+
+
+```sql
 INSERT INTO employee (
-    name, manager_id, company_id
+    full_name, manager_id, company_id
 )
 SELECT
     left(md5(i::text), 10),
     trunc(random()*100),
-    trunc(random()*10),
+    trunc(random()*10)
 FROM generate_series(1, 10000000) s(i);
 ```
 
-```
+```sql
 SELECT * FROM employee LIMIT 50;
 ```
 
 BUSCA EM ID
 
-postgres=# EXPLAIN ANALYZE SELECT name FROM employee WHERE id=5000;
+postgres=# EXPLAIN ANALYZE SELECT full_name FROM employee WHERE id=5000;
 
                                                        QUERY PLAN
 -------------------------------------------------------------------------------------------------------------------------
@@ -67,7 +71,7 @@ postgres=# EXPLAIN ANALYZE SELECT * FROM employee WHERE manager_id=50;
 (8 rows)
 
 
-```
+```sql
 CREATE INDEX employee__manager_id_idx ON employee(manager_id);
 ```
 PostgreSQL uses btree by default
@@ -94,28 +98,70 @@ postgres=# SELECT count(id) FROM employee WHERE manager_id=51;
 (1 row)
 
 
-https://www.postgresql.org/docs/current/static/ltreehtml
+```sql
+WITH RECURSIVE subordinate AS (
+	SELECT id, manager_id, full_name
+	FROM employee WHERE id = 2
+	UNION
+		SELECT e.id, e.manager_id, e.full_name
+		FROM employee e
+		INNER JOIN subordinate s ON s.id = e.manager_id
+) SELECT * FROM subordinate;
 ```
+
+
+postgres=# EXPLAIN ANALYZE WITH RECURSIVE subordinate AS (
+	SELECT id, manager_id, full_name
+	FROM employee WHERE id = 2
+	UNION
+		SELECT e.id, e.manager_id, e.full_name
+		FROM employee e
+		INNER JOIN subordinate s ON s.id = e.manager_id
+) SELECT * FROM subordinate;
+                                                                 QUERY PLAN
+---------------------------------------------------------------------------------------------------------------------------------------------
+ CTE Scan on subordinate  (cost=2311940.08..2511937.50 rows=9999871 width=40) (actual time=93.199..7130.447 rows=300094 loops=1)
+   CTE subordinate
+     ->  Recursive Union  (cost=0.43..2311940.08 rows=9999871 width=19) (actual time=93.194..7074.610 rows=300094 loops=1)
+           ->  Index Scan using employee_pkey on employee  (cost=0.43..8.45 rows=1 width=19) (actual time=93.186..93.190 rows=1 loops=1)
+                 Index Cond: (id = 2)
+           ->  Hash Join  (cost=0.33..211193.42 rows=999987 width=19) (actual time=1140.019..1711.085 rows=75023 loops=4)
+                 Hash Cond: (e.manager_id = s.id)
+                 ->  Seq Scan on employee e  (cost=0.00..163693.71 rows=9999871 width=19) (actual time=0.008..564.394 rows=10000000 loops=4)
+                 ->  Hash  (cost=0.20..0.20 rows=10 width=4) (actual time=15.859..15.859 rows=75024 loops=4)
+                       Buckets: 131072 (originally 1024)  Batches: 2 (originally 1)  Memory Usage: 3073kB
+                       ->  WorkTable Scan on subordinate s  (cost=0.00..0.20 rows=10 width=4) (actual time=1.941..7.825 rows=75024 loops=4)
+ Planning Time: 0.871 ms
+ JIT:
+   Functions: 16
+   Options: Inlining true, Optimization true, Expressions true, Deforming true
+   Timing: Generation 12.688 ms, Inlining 8.712 ms, Optimization 58.021 ms, Emission 33.524 ms, Total 112.946 ms
+ Execution Time: 7169.798 ms
+(17 rows)
+
+https://www.postgresql.org/docs/current/static/ltreehtml
+
+```sql
 CREATE TABLE position(
     id serial primary key,
     employee_id int,
-    hierarchy ltree
+    hierarchy_path ltree
 );
-CREATE INDEX employee__hierarchy_idx ON position USING gist (hierarchy);
+CREATE INDEX employee__hierarchy_idx ON position USING gist (hierarchy_path);
 CREATE INDEX employee__employee_id_idx ON position(employee_id);
 ```
 Generalized Search Index (GiST)
 
+```sql
+INSERT INTO position(employee_id, hierarchy_path) VALUES ( 1, '1');
+INSERT INTO position(employee_id, hierarchy_path) VALUES ( 2, '1.2');
+INSERT INTO position(employee_id, hierarchy_path) VALUES ( 3, '1.3');
+INSERT INTO position(employee_id, hierarchy_path) VALUES ( 4, '1.4');
+INSERT INTO position(employee_id, hierarchy_path) VALUES ( 5, '5.1');
+INSERT INTO position(employee_id, hierarchy_path) VALUES ( 6, '1.2.6');
+INSERT INTO position(employee_id, hierarchy_path) VALUES ( 7, '1.2.7');
+INSERT INTO position(employee_id, hierarchy_path) VALUES ( 8, '1.2.7.8');
 ```
-INSERT INTO position(employee_id, hierarchy) VALUES ( 1, '1');
-INSERT INTO position(employee_id, hierarchy) VALUES ( 2, '1.2');
-INSERT INTO position(employee_id, hierarchy) VALUES ( 3, '1.3');
-INSERT INTO position(employee_id, hierarchy) VALUES ( 4, '1.4');
-INSERT INTO position(employee_id, hierarchy) VALUES ( 5, '5.1');
-INSERT INTO position(employee_id, hierarchy) VALUES ( 6, '1.2.6');
-INSERT INTO position(employee_id, hierarchy) VALUES ( 7, '1.2.7');
-INSERT INTO position(employee_id, hierarchy) VALUES ( 8, '1.2.7.8');
-````
 
 postgres=# EXPLAIN ANALYZE SELECT employee_id FROM position WHERE hierarchy ~ '*.2.*';
                                                            QUERY PLAN
@@ -129,31 +175,38 @@ postgres=# EXPLAIN ANALYZE SELECT employee_id FROM position WHERE hierarchy ~ '*
  Execution Time: 0.181 ms
 (7 rows)
 
-```
+INSERT, UPDATE E DELETE COMPLEXOS
+
+```sql
 UPDATE position
-SET hierarchy = text2ltree('9.1')::lpath || subpath(hierarchy,2))
+SET hierarchy = text2ltree('9.1')::lpath || subpath(hierarchy,nlevel('9.1'))
 WHERE hierarchy <@ '1';
-````
-
 ```
+
+```sql
 DELETE position
-SET hierarchy = text2ltree('9.1')::lpath || subpath(hierarchy,2))
+SET hierarchy = text2ltree('9')::lpath || subpath(hierarchy,nlevel('9.1'))
 WHERE hierarchy <@ '1';
-````
-
-
-
-# Consideration
-
-Usar distribuição mais próxima da realidade para análise de performance
-RH companies need to keep documents for a long timebox, maybe a soft delete for users and documents?
+```
 
 # 2.  Schema-based
 
 https://hackernoon.com/your-guide-to-schema-based-multi-tenant-systems-and-postgresql-implementation-gm433589
 
+```sql
+CREATE TABLE company(id serial PRIMARY KEY, name text);
 ```
-CREATE SCHEMA company_id (id serial PRIMARY KEY, name text);
+
+```sql
+CREATE SCHEMA org_1;
+```
+
+```sql
+SET search_path TO org_1, public;
+```
+
+```sql
+CREATE TABLE employee(id serial PRIMARY KEY, name text, manager_id int);
 ```
 
 Cons
@@ -162,7 +215,9 @@ Cons
 
 # 3. Separate database per tenant (used in virtualization sample)
 
+```sql
 CREATE TABLE employee(id serial PRIMARY KEY, name text, manager_id int);
+```
 
 Cons
 - DB management
@@ -192,11 +247,11 @@ password_encryption = true
 https://www.cybertec-postgresql.com/en/setting-up-ssl-authentication-for-postgresql/
 
 ### SSL
-| File   |      Contents      |  CoEffectol |
+| File   |      Contents      |  Effect |
 |----------|:-------------:|------:|
-| '$PGDATA/server.crt' |  server certificate | sent to client to indicate server's identity |
-| '$PGDATA/server.key' |    server private key   |   proves server certificate was sent by the owner; does not indicate certificate owner is trustworthy |
-| '$PGDATA/root.crt' | trusted certificate | authorities	checks that client certificate is signed by a trusted certificate authority |
+| '$PGDATA/server.crt' | server certificate | sent to client to indicate server's identity |
+| '$PGDATA/server.key' | server private key | proves server certificate was sent by the owner; does not indicate certificate owner is trustworthy |
+| '$PGDATA/root.crt' | trusted certificate authorities | checks that client certificate is signed by a trusted certificate authority |
 
 ```
 # postgresql.conf
@@ -212,3 +267,10 @@ PostgreSQL 9.5 and newer includes a feature called Row Level Security (RLS). Whe
 pgadmin
 
 https://towardsdatascience.com/how-to-run-postgresql-and-pgadmin-using-docker-3a6a8ae918b5
+
+
+# Consideration
+
+Usar distribuição mais próxima da realidade para análise de performance
+
+RH companies need to keep documents for a long timebox, maybe a soft delete for users and documents?
